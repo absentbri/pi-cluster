@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: unbound
+  labels:
+    name: unbound
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unbound
+  namespace: unbound
+  labels:
+    app.kubernetes.io/name: adguard-home
+spec:
+  selector:
+    matchLabels:
+      app: unbound
+  template:
+    metadata:
+      labels:
+        app: unbound
+    spec:
+      containers:
+      - name: unbound
+        image: klutchell/unbound
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 53
+          protocol: TCP
+        - containerPort: 53
+          protocol: UDP
+---
+kind: Service 
+apiVersion: v1 
+metadata:
+  name: unbound 
+  namespace: unbound
+spec:
+  selector:
+    app: unbound
+  ports:
+    - name: 53-udp
+      port: 53
+      targetPort: 5053
+      protocol: UDP
+    - name: 53-tcp
+      port: 53
+      targetPort: 5053
+      protocol: TCP
