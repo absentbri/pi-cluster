@@ -1,17 +1,22 @@
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: adguard
+  labels:
+    name: adguard
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: adguard-home
+  namespace: adguard
   labels:
     app: adguard-home
 spec:
   ports:
-  # - port: 3000
-  #   name: setup
-  #   targetPort: 3000
   - port: 80
     name: web
-    targetPort: 80
+    targetPort: 80 # needs to be 3000 for initial setup
   - port: 53
     name: dns
   - port: 53
@@ -24,12 +29,12 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: adguard-home
+  namespace: adguard
 spec:
   selector:
     matchLabels:
       app: adguard-home
   serviceName: adguard-home
-  replicas: 1
   template:
     metadata:
       labels:
@@ -54,6 +59,7 @@ spec:
   volumeClaimTemplates:
   - metadata:
       name: conf
+      namespace: adguard
     spec:
       accessModes: [ "ReadWriteMany" ]
       storageClassName: nfs-local
@@ -62,6 +68,7 @@ spec:
           storage: 50Mi
   - metadata:
       name: work
+      namespace: adguard
     spec:
       accessModes: [ "ReadWriteMany" ]
       storageClassName: nfs-local
@@ -73,6 +80,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: adguard-home
+  namespace: adguard
 spec:
   defaultBackend:
     service:
@@ -90,3 +98,45 @@ spec:
             name: adguard-home
             port:
               number: 80
+---
+# Host binding udp-dns
+apiVersion: v1
+kind: Service
+metadata:
+  name: adguard-home-dns-udp
+  namespace: adguard
+spec:
+  type: LoadBalancer
+  selector:
+    app: adguard-home
+  ports:
+    - name: 53-udp
+      port: 53
+      targetPort: 53
+      protocol: UDP
+  externalTrafficPolicy: Local
+status:
+  loadBalancer:
+    ingress:
+    - ip: 192.168.1.90
+---
+# Host binding tcp-dns
+apiVersion: v1
+kind: Service
+metadata:
+  name: adguard-home-dns-tcp
+  namespace: adguard
+spec:
+  type: LoadBalancer
+  selector:
+    app: adguard-home
+  ports:
+    - name: 53-tcp
+      port: 53
+      targetPort: 53
+      protocol: TCP
+  externalTrafficPolicy: Local
+status:
+  loadBalancer:
+    ingress:
+    - ip: 192.168.1.90
