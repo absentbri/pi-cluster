@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: adguard-home
+  labels:
+    app: adguard-home
+spec:
+  ports:
+  # - port: 3000
+  #   name: setup
+  #   targetPort: 3000
+  - port: 80
+    name: web
+    targetPort: 80
+  - port: 53
+    name: dns
+  - port: 53
+    name: dns-udp
+    protocol: UDP
+  selector:
+    app: adguard-home
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: adguard-home
+spec:
+  selector:
+    matchLabels:
+      app: adguard-home
+  serviceName: adguard-home
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: adguard-home
+    spec:
+      containers:
+      - name: adguard-home
+        image: adguard/adguardhome
+        ports:
+        - containerPort: 80
+          name: web
+        - containerPort: 53
+          name: dns
+        - containerPort: 53
+          name: dns-udp
+          protocol: UDP
+        volumeMounts:
+        - name: conf
+          mountPath: /opt/adguardhome/conf
+        - name: work
+          mountPath: /opt/adguardhome/work
+  volumeClaimTemplates:
+  - metadata:
+      name: conf
+    spec:
+      accessModes: [ "ReadWriteMany" ]
+      storageClassName: nfs-local
+      resources:
+        requests:
+          storage: 50Mi
+  - metadata:
+      name: work
+    spec:
+      accessModes: [ "ReadWriteMany" ]
+      storageClassName: nfs-local
+      resources:
+        requests:
+          storage: 1Gi
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: adguard-home
+spec:
+  defaultBackend:
+    service:
+      name: adguard-home
+      port:
+        number: 80
+  rules:
+  - host: "adguard.jovian.lan"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: adguard-home
+            port:
+              number: 80
