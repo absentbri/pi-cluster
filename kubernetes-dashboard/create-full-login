@@ -1,0 +1,11 @@
+# create user/serviceaccount outside of namespaces
+kubectl create serviceaccount dashboard-admin-sa
+# bind to admins
+kubectl create clusterrolebinding dashboard-admin-sa --clusterrole=cluster-admin --serviceaccount=default:dashboard-admin-sa
+# find the secret to introspect
+kubectl get secrets
+# get the login token to use in the UI
+kubectl get secret dashboard-admin-sa-token-<value> -o jsonpath="{.data.token}" | base64 --decode
+# proxy the dashboard
+kubectl proxy
+# profit

@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cloudflare-ddns
+  labels:
+    name: cloudflare-ddns
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ddns-config
+  namespace: cloudflare-ddns
+data:
+  PROXIED: "false"
+  RRTYP: A
+  RRTYPE: A
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflare-ddns
+  namespace: cloudflare-ddns
+spec:
+  selector:
+    matchLabels:
+      app: cloudflare-ddns
+  template:
+    metadata:
+      labels:
+        app: cloudflare-ddns
+    spec:
+      containers:
+      - name: cloudflare-ddns
+        image: oznu/cloudflare-ddns
+        envFrom:
+        - configMapRef:
+            name: ddns-config
+        - secretRef:
+            name: ddns-secret
+        resources:
+          limits:
+            memory: "32Mi"
+            cpu: "100m"

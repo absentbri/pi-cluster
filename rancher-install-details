@@ -12,3 +12,4 @@ helm install rancher rancher-latest/rancher \
   --set bootstrapPassword=admin
 
   
+helm delete rancher --namespace cattle-system
