@@ -1,8 +1,7 @@
 # pi-cluster
 Raspberry Pi Cluster Perpetual Repo
 
-An effort to move what services I could onto my 4 Node k3s Raspberry Pi 4 Bramble
-While also getting more familiar with Kubernetes over other tooling I'd used before.
+An effort to move what services I could onto my 4 Node k3s Raspberry Pi 4 Bramble while also getting more familiar with Kubernetes over other tooling I'd used before.
 
 This repo will always be tailored for running everything through kubectl, though may add other dependencies as I go along like using kustomize and jsonnet to further familiarity with these tools.
 
@@ -15,6 +14,7 @@ This repo will always be tailored for running everything through kubectl, though
 
 ## Cloudflare DDNS
 I know this could be run as a cronjob but I'm familiar with this docker container from running it on Unraid.
+
 TODO: perhaps write a bespoke implementation with busybox and api calls?
 
 Ensure you have a secrets file (see sample), I have them stored just outside the repository (sibling folder) and draw them in as to not accidently commit my credentials to this repo.
@@ -35,7 +35,9 @@ kubectl apply -f unbound/
 With multiple PCs at home pulling Windows updates and using Steam/GamePass/Origin/etc, this is a no-brainer for me.. And that I have a 30TB+ Unraid box with enough free space to cache all the games I own... I like it...
 
 This repo does not cover setting up the LanCache Monolith server, which you should run on another machine... Unless you're doing this on a PiNAS that is...
+
 See here for how to set this up: https://lancache.net/docs/
+
 There is an Unraid native template from the Community Apps plugin to speed it up as well if you use this for your NAS
 
 ```shell
@@ -45,7 +47,12 @@ kubectl apply -f lancache-dns/
 ## Adguard Home
 I hate ads... So much that I pay for YouTube Premium (and before that YouTubeRed) and pay for any other native "ad free" stuff where I can.
 For the rest... there's AdGuardHome...
-Why not PiHole... I mean, you're running this on Raspberry Pi's? Well, I ran it for years and I never quite got it right and it drove my partner crazy (I guess me too) where on Google it would display the sponsored ad links, but you click on them and it would not resolve the dns... The internet is broken enough without this brand of BS... I tried AdGuard Home on a whim and it performs perfectly vs PiHole so I've kept it.
+
+Why not PiHole... I mean, you're running this on Raspberry Pi's? 
+
+Well, I ran it for years and I never quite got it right and it drove my partner crazy (I guess me too) where on Google it would display the sponsored ad links, but you click on them and it would not resolve the dns... 
+
+The internet is broken enough without this brand of BS... I tried AdGuard Home on a whim and it performs perfectly vs PiHole so I've kept it.
 
 There are some caveats with this one... 
 - You have the nfs subdir provisioner setup
