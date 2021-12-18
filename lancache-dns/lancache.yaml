@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lancache
+  labels:
+    name: lancache
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lancache-config
+  namespace: lancache
+data:
+  USE_GENERIC_CACHE: "true"
+  LANCACHE_IP: 192.168.1.120 # this is the IP address of your lancache server (I don't suggest running this on Pi's unless you're a lunatic... mines on an Unraid box)
+  UPSTREAM_DNS: 10.43.31.1 # unbound
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lancache-dns
+  namespace: lancache
+  labels:
+    app.kubernetes.io/name: lancache-dns
+spec:
+  selector:
+    matchLabels:
+      app: lancache-dns
+  template:
+    metadata:
+      labels:
+        app: lancache-dns
+    spec:
+      containers:
+      - name: lancache-dns
+        image: jrcichra/lancachenet-lancache-dns:latest
+        envFrom:
+        - configMapRef:
+            name: lancache-config
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 53
+          protocol: TCP
+        - containerPort: 53
+          protocol: UDP
+---
+kind: Service 
+apiVersion: v1 
+metadata:
+  name: lancache
+  namespace: lancache
+spec:
+  selector:
+    app: lancache-dns
+  clusterIP: 10.43.31.2
+  ports:
+    - name: 53-udp
+      port: 53
+      targetPort: 53
+      protocol: UDP
+    - name: 53-tcp
+      port: 53
+      targetPort: 53
+      protocol: TCP

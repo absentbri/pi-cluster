@@ -11,7 +11,7 @@ metadata:
   name: unbound
   namespace: unbound
   labels:
-    app.kubernetes.io/name: adguard-home
+    app.kubernetes.io/name: unbound
 spec:
   selector:
     matchLabels:
@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - name: unbound
-        image: klutchell/unbound
+        image: klutchell/unbound:sha-7d053e2 # Lost trust, fiddled with default settings between versions (like ports)
         resources:
           limits:
             memory: "128Mi"
@@ -42,12 +42,13 @@ metadata:
 spec:
   selector:
     app: unbound
+  clusterIP: 10.43.31.1
   ports:
     - name: 53-udp
       port: 53
-      targetPort: 5053
+      targetPort: 53
       protocol: UDP
     - name: 53-tcp
       port: 53
-      targetPort: 5053
+      targetPort: 53
       protocol: TCP
