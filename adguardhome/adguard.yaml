@@ -93,7 +93,9 @@ data:
       blocked_services: []
       local_domain_name: local
       resolve_clients: true
-      local_ptr_upstreams: []
+      local_ptr_upstreams:
+      - kube-dns.kube-system.svc.cluster.local # k3s resolver
+      - 192.168.1.1 # local network dns      
     tls:
       enabled: false
       server_name: ""
@@ -204,7 +206,7 @@ spec:
       initContainers:
       - name: copy
         image: busybox:1.28
-        command: ["/bin/sh", "-c", "cp /config/AdGuardHome.yaml /opt/adguardhome/conf/"]
+        command: ["/bin/sh", "-c", "cp -f /config/AdGuardHome.yaml /opt/adguardhome/conf/"]
         volumeMounts:
         - name: tmp-conf
           mountPath: /config
