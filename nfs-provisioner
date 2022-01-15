@@ -6,15 +6,19 @@ helm install --namespace kube-system nfs-subdir-external-provisioner nfs-subdir-
     --set storageClass.name=managed-nfs-storage
 
 
-helm install --namespace kube-system nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
+helm install \
+    --namespace kube-system \
     --set nfs.server=192.168.1.90 \
     --set nfs.path=/srv/nfs \
-    --set storageClass.name=nfs-local
+    --set storageClass.name=nfs-local \
+    --set annotations.storageclass.kubernetes.io/is-default-class="true" \
+    nfs-subdir-external-provisioner \
+    nfs-subdir-external-provisioner/nfs-subdir-external-provisioner
     
 # --set annotations.storageclass.kubernetes.io/is-default-class="true"
 
 
-helm delete nfs-subdir-external-provisioner
+helm delete nfs-subdir-external-provisioner -n kube-system
 
 
 helm upgrade \

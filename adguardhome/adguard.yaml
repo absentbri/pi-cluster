@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -10,8 +11,7 @@ kind: ConfigMap
 metadata:
   name: adguard-config
   namespace: adguard
-data: 
-  # hashed password is the default 'admin'
+data:
   AdGuardHome.yaml: |
     bind_host: 0.0.0.0
     bind_port: 80
@@ -89,13 +89,13 @@ data:
       - domain: unraid.lan
         answer: 192.168.1.110
       - domain: '*.jovian.lan'
-        answer: 192.168.1.90
+        answer: 192.168.1.99
       blocked_services: []
       local_domain_name: local
       resolve_clients: true
       local_ptr_upstreams:
       - kube-dns.kube-system.svc.cluster.local # k3s resolver
-      - 192.168.1.1 # local network dns      
+      - 192.168.1.1 # local network dns
     tls:
       enabled: false
       server_name: ""
@@ -120,7 +120,7 @@ data:
       url: https://adaway.org/hosts.txt
       name: AdAway Default Blocklist
       id: 2
-    - enabled: false
+    - enabled: true
       url: https://www.malwaredomainlist.com/hostslist/hosts.txt
       name: MalwareDomainList.com Hosts List
       id: 4
@@ -163,7 +163,6 @@ data:
     log_file: ""
     verbose: false
     schema_version: 10
-
 ---
 apiVersion: v1
 kind: Service
@@ -174,14 +173,14 @@ metadata:
     app: adguard-home
 spec:
   ports:
-  - port: 80
-    name: web
-    targetPort: 80 # needs to be 3000 for initial setup
-  - port: 53
-    name: dns
-  - port: 53
-    name: dns-udp
-    protocol: UDP
+    - port: 80
+      name: web
+      targetPort: 80  # needs to be 3000 for initial setup
+    - port: 53
+      name: dns
+    - port: 53
+      name: dns-udp
+      protocol: UDP
   selector:
     app: adguard-home
 ---
@@ -204,60 +203,60 @@ spec:
     spec:
       terminationGracePeriodSeconds: 1800
       initContainers:
-      - name: copy
-        image: busybox:1.28
-        command: ["/bin/sh", "-c", "cp -f /config/AdGuardHome.yaml /opt/adguardhome/conf/"]
-        volumeMounts:
-        - name: tmp-conf
-          mountPath: /config
-        - name: conf
-          mountPath: /opt/adguardhome/conf
+        - name: copy
+          image: busybox:1.28
+          command: ["/bin/sh", "-c", "cp -f /config/AdGuardHome.yaml /opt/adguardhome/conf/"]
+          volumeMounts:
+            - name: tmp-conf
+              mountPath: /config
+            - name: conf
+              mountPath: /opt/adguardhome/conf
       containers:
-      - name: adguard-home
-        image: adguard/adguardhome
-        ports:
-        - containerPort: 80
-          name: web
-        - containerPort: 53
-          name: dns
-        - containerPort: 53
-          name: dns-udp
-          protocol: UDP
-        resources:
-          limits:
-            memory: "128Mi"
-            cpu: "500m"
-        volumeMounts:
-        - name: conf
-          mountPath: /opt/adguardhome/conf
-        - name: work
-          mountPath: /opt/adguardhome/work
+        - name: adguard-home
+          image: adguard/adguardhome
+          ports:
+            - containerPort: 80
+              name: web
+            - containerPort: 53
+              name: dns
+            - containerPort: 53
+              name: dns-udp
+              protocol: UDP
+          resources:
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: conf
+              mountPath: /opt/adguardhome/conf
+            - name: work
+              mountPath: /opt/adguardhome/work
       volumes:
-      - name: tmp-conf
-        configMap:
-          name: adguard-config
-          items: 
-          - key: AdGuardHome.yaml
-            path: AdGuardHome.yaml
+        - name: tmp-conf
+          configMap:
+            name: adguard-config
+            items:
+              - key: AdGuardHome.yaml
+                path: AdGuardHome.yaml
   volumeClaimTemplates:
-  - metadata:
-      name: conf
-      namespace: adguard
-    spec:
-      accessModes: [ "ReadWriteMany" ]
-      storageClassName: nfs-local
-      resources:
-        requests:
-          storage: 50Mi
-  - metadata:
-      name: work
-      namespace: adguard
-    spec:
-      accessModes: [ "ReadWriteMany" ]
-      storageClassName: nfs-local
-      resources:
-        requests:
-          storage: 1Gi
+    - metadata:
+        name: conf
+        namespace: adguard
+      spec:
+        accessModes: ["ReadWriteMany"]
+        storageClassName: nfs-local
+        resources:
+          requests:
+            storage: 50Mi
+    - metadata:
+        name: work
+        namespace: adguard
+      spec:
+        accessModes: ["ReadWriteMany"]
+        storageClassName: nfs-local
+        resources:
+          requests:
+            storage: 1Gi
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -271,16 +270,16 @@ spec:
       port:
         number: 80
   rules:
-  - host: "adguard.jovian.lan"
-    http:
-      paths:
-      - pathType: Prefix
-        path: "/"
-        backend:
-          service:
-            name: adguard-home
-            port:
-              number: 80
+    - host: "adguard.jovian.lan"
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: adguard-home
+                port:
+                  number: 80
 ---
 # Host binding udp-dns
 apiVersion: v1
@@ -288,6 +287,8 @@ kind: Service
 metadata:
   name: adguard-home-dns-udp
   namespace: adguard
+  annotations:
+    metallb.universe.tf/allow-shared-ip: "adguard-dns"
 spec:
   type: LoadBalancer
   selector:
@@ -298,10 +299,7 @@ spec:
       targetPort: 53
       protocol: UDP
   externalTrafficPolicy: Local
-status:
-  loadBalancer:
-    ingress:
-    - ip: 192.168.1.90
+  loadBalancerIP: 192.168.1.95
 ---
 # Host binding tcp-dns
 apiVersion: v1
@@ -309,6 +307,8 @@ kind: Service
 metadata:
   name: adguard-home-dns-tcp
   namespace: adguard
+  annotations:
+    metallb.universe.tf/allow-shared-ip: "adguard-dns"
 spec:
   type: LoadBalancer
   selector:
@@ -319,7 +319,4 @@ spec:
       targetPort: 53
       protocol: TCP
   externalTrafficPolicy: Local
-status:
-  loadBalancer:
-    ingress:
-    - ip: 192.168.1.90
+  loadBalancerIP: 192.168.1.95
