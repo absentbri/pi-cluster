@@ -66,4 +66,10 @@ kubectl apply -f adguardhome/
 
 ## Kubernetes Dashboard
 I was using Rancher, and while I like it I dont like losing 40%+ of my limited resources on my Pi Cluster so enter Kubernetes Dashboard...
-This is a work in progress... I cannot get the ingress working on it for seemingly no reason...
+Seems a little too locked down for my liking when I'm running this locally and seems the --enable-insecure-login saetting from https://github.com/kubernetes/dashboard/blob/master/docs/common/dashboard-arguments.md maybe doesnt work as expected.. and actually prevents insecure login...
+
+```shell
+kubectl apply -f dashboard/
+```
+
+Setup insecure allowed and bypass auth (click skip on the login screen if prompted)

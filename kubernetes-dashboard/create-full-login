@@ -9,3 +9,13 @@ kubectl get secret dashboard-admin-sa-token-<value> -o jsonpath="{.data.token}" 
 # proxy the dashboard
 kubectl proxy
 # profit
+
+
+
+kubectl create clusterrolebinding kubernetes-dashboard -n kubernetes-dashboard --clusterrole=cluster-admin --serviceaccount=kubernetes-dashboard:kubernetes-dashboard
+
+
+kubectl get secrets -n kubernetes-dashboard
+
+kubectl get secret -n kubernetes-dashboard kubernetes-dashboard-token-<value> -o jsonpath="{.data.token}" | base64 --decode
+
